@@ -1,1 +1,5 @@
-1,2,3
+train 0.5 test 0.2 gcn 8-16-32-128 avgpool 2 linear 64-128-d64-d32-10 lr 0.01 400
+train 0.6 test 0.2                                                  lr 0.008 1000
+train 0.78 test 0.25               maxpool 2   
+train 0.64 test 0.21                         linear 64-128-d64-d32-d10 lr 0.006 1500 dropout 0.2
+train 0.71 test 0.24                                                   lr 0.009 1500         0.4 
