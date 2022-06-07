@@ -1,0 +1,6 @@
+feat -> pixel value(yes dist)
+6 _graphs_six_f_
+8 _graphs_six_f_in_pos_
+
+feat -> pixel distance(no dist)
+NxN _graphs_dist_
