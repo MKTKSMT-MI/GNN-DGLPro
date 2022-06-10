@@ -73,7 +73,7 @@ model = Nested_net()
 model.to(device)
 
 #学習済みモデルをロード
-path = '../models/Nest_model.pth'
+path = 'models/Nest_model.pth'
 model.load_state_dict(torch.load(path))
 
 def get_distance(x,y): #距離計算用関数
