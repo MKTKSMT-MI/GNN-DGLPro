@@ -1,7 +1,7 @@
 import fitz
 import requests
 import json
-pdf_file_path = '/home/makoto/Document/Anaconda/GNN-DGLPro/inzemi/16.pdf'
+pdf_file_path = '/home/makoto/Document/Anaconda/GNN-DGLPro/inzemi/2206.00272.pdf'
 output_file_path = "output16.md"
 page_num = 1
 print('開始')
