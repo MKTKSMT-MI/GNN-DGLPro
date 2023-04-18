@@ -1,9 +1,29 @@
-model1:
+model3:
   input_size: 81
-  hidden_size: [60,40,30]
+  hidden_size: [100,120,130]
   output_size: 10
 
-model2:
+model4:
   input_size: 81
-  hidden_size: [200,100,50]
+  hidden_size: [100,150,200,150,100]
+  output_size: 10
+
+model5:
+  input_size: 81
+  hidden_size: [100,90,30]
+  output_size: 10
+
+model6:
+  input_size: 81
+  hidden_size: [200,100,50,20]
+  output_size: 10
+
+model7:
+  input_size: 81
+  hidden_size: [300,400,100]
+  output_size: 10
+
+model8:
+  input_size: 81
+  hidden_size: [162,32,16]
   output_size: 10
