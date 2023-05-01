@@ -15,12 +15,19 @@ import time
 from dgl.dataloading import GraphDataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 import os
+import yaml
+import time
+import datetime
 
-print('import')
+
+#from torchviz import make_dot
+from IPython.display import display
+
 
 class STL10TrainDataset(DGLDataset):
-    def __init__(self,data_path):
+    def __init__(self,data_path,transforms=None):
         self.data_path = data_path
+        self.transforms = transforms
         super().__init__(name='stl10_train_gprah')
     
     def process(self):
@@ -30,15 +37,19 @@ class STL10TrainDataset(DGLDataset):
         self.dim_nfeats=len(self.graphs[0].ndata['feat'][0])
 
     def __getitem__(self, idx):
-        return self.graphs[idx], self.labels[idx]
-
+        if self.transforms == None:
+            return self.graphs[idx], self.labels[idx]
+        else:
+            data=self.transforms(self.graphs[idx])
+            return data,self.labels[idx]
     def __len__(self):
         return len(self.graphs)
 
 
 class STL10TestDataset(DGLDataset):
-    def __init__(self,data_path):
+    def __init__(self,data_path,transforms=None):
         self.data_path = data_path
+        self.transforms = transforms
         super().__init__(name='stl10_test_gprah')
     
     def process(self):
@@ -48,138 +59,171 @@ class STL10TestDataset(DGLDataset):
         self.dim_nfeats=len(self.graphs[0].ndata['feat'][0])
 
     def __getitem__(self, idx):
-        return self.graphs[idx], self.labels[idx]
-
+        if self.transforms == None:
+            return self.graphs[idx], self.labels[idx]
+        else:
+            data=self.transforms(self.graphs[idx])
+            return data,self.labels[idx]
+        
     def __len__(self):
         return len(self.graphs)
 
 
-class GCN(nn.Module):
-    def __init__(self,in_feat,h_feat,num_classes):
-        super(GCN,self).__init__()
-        self.gconv1=GraphConv(in_feat,h_feat)
-        self.gconv2=GraphConv(h_feat,num_classes)
-        self.gconv3=GraphConv(h_feat,num_classes)
-        self.dropout=nn.Dropout(0.2)
+class DynamicGCN(nn.Module):
+    def __init__(self,input_size,hidden_size,output_size):
+        super(DynamicGCN,self).__init__()
+        self.input_layer=GraphConv(input_size,hidden_size[0])
+        self.middle_layers=nn.ModuleList([GraphConv(hidden_size[i],hidden_size[i+1]) for i in range(len(hidden_size)-1)])
+        self.output_layer=GraphConv(hidden_size[-1],output_size)
 
-    def forward(self,g,in_feat):
-        h=self.gconv1(g,in_feat)
-        h=F.relu(h)
-        h=self.dropout(h)
-        h=self.gconv2(g,h)
-        #h=F.relu(h)
-        #h=self.gconv3(g,h)
+        self.flatt=nn.Flatten()
+
+    
+    def forward(self,g,n_feat,e_feat=None):
+        n_feat=self.flatt(n_feat)
+        h=self.input_layer(g,n_feat,None,e_feat).clamp(0)
+        for layer in self.middle_layers:
+            h=layer(g,h).clamp(0)
+        h=self.output_layer(g,h).clamp(0)
         g.ndata['h'] = h
+
         return dgl.mean_nodes(g,'h')
 
-print('dataset')
-#transform = transforms.Compose([transforms.Normalize(0,1)])
-traindataset=STL10TrainDataset('/mnt/d/logs/STL10 Datasets/train/nnum200_ndatades_enone.dgl')
-testdataset=STL10TestDataset('/mnt/d/logs/STL10 Datasets/test/nnum200_ndatades_enone.dgl')
+
+#初期設定
+data_path=['nnum20_ndatapic9_enone_akaze.dgl',
+           'nnum20_ndatapic21_enone_akaze.dgl',
+           'nnum50_ndatapic9_enone_akaze.dgl',
+           'nnum50_ndatapic21_enone_akaze.dgl']
+config_files=['Classification/config1.yaml','Classification/config2.yaml']
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
-print('dataloader')
-if os.name =='posix':
-    num_workers = 2
-else:
-    num_workers = 0
-num_workers = 0
-traindataloader = GraphDataLoader(traindataset,batch_size = 20,shuffle = True,num_workers = num_workers,pin_memory = True)
-testdataloader = GraphDataLoader(testdataset,batch_size = 1000,shuffle = True,num_workers = num_workers,pin_memory = True)
-print(f'num_wokers = {num_workers}')
-print(os.name)
+for data_number in range(len(data_path)):
+    #データ読み込み
+    traindataset=STL10TrainDataset(f'./data/STL10 Datasets/train/{data_path[data_number]}')
+    testdataset=STL10TestDataset(f'./data/STL10 Datasets/train/{data_path[data_number]}')
 
-'''
-print(traindataset.dim_nfeats)
-model=GCN(traindataset.dim_nfeats,10,10)
-optimizer=optim.Adam(model.parameters(),lr=0.001)
-device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-model.to(device)
-epochs=500
-'''
-print('epoch start')
-clay=[20,30,40,80]
-epochs=5
-save_train_acc = []
-save_test_acc = []
-save_train_acc_list=[]
-save_test_acc_list=[]
-for i in clay:
-    model=GCN(traindataset.dim_nfeats,i,10)
-    optimizer=optim.Adam(model.parameters(),lr=0.001)
-    device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    model.to(device)
+    #データローダー作成
+    num_workers=2
+    traindataloader = GraphDataLoader(traindataset,batch_size = 50,shuffle = True,num_workers = num_workers,pin_memory = True)
+    testdataloader = GraphDataLoader(testdataset,batch_size = 1000,shuffle = True,num_workers = num_workers,pin_memory = True)
+
+    #設定ファイル読み込み
+    with open(config_files[data_number%2],'r') as f:
+        config=yaml.safe_load(f)
+
+    #パラメータ設定
+    lr=0.0001
+    epochs=2
+
+    #モデルの学習
+    for model_name, model_config in config.items():
+        #時間計測
+        start=time.time()
+        #結果を保存するディレクトリを作成
+        save_dir=f'Classification/save/{data_path[data_number]}/{model_name}'
+        os.makedirs(save_dir,exist_ok=True)
 
 
-    loss_list = []
-    acc_list = []
-    test_acc_list = []
+        #モデルの初期化
+        model=DynamicGCN(model_config['input_size'],model_config['hidden_size'],model_config['output_size'])
+        model.to(device)
+        lossF=nn.CrossEntropyLoss()
+        optimizer=optim.Adam(model.parameters(),lr=lr)
 
+        #情報保存用の変数の初期化
+        #トレーニング用
+        num_correct=0
+        num_tests=0
+        train_loss_list = []
+        train_acc_list = []
+        #テスト用
+        test_num_correct = 0
+        test_num_tests = 0
+        test_acc_list = []
 
-    num_correct = 0
-    num_tests = 0
-    test_num_correct = 0
-    test_num_tests = 0
-    lossF = nn.CrossEntropyLoss()
-    #,batched_graph.edata['distance'].float()
-    BP = 0
-    for epoch in tqdm(range(epochs)):
-        if BP != 0:
-            break
-        model.train()
-        for batched_graph, labels in traindataloader:
-            batched_graph = batched_graph.to(device)
-            labels = labels.to(device)
-            pred = model(batched_graph, batched_graph.ndata['feat'].float())
-            loss = lossF(pred,labels)
-            if loss.item() < 0.05:
-                BP = 0
-                break
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            num_correct += (pred.argmax(1) == labels).sum().item()
-            num_tests += len(labels)
-        loss_list.append(loss.item())
-        acc_list.append(num_correct / num_tests) #学習中トレーニングacc
-    
-        model.eval()
-        for tbatched_graph, tlabels in testdataloader:
-            tbatched_graph = tbatched_graph.to(device)
-            tlabels = tlabels.to(device)
-            tpred = model(tbatched_graph, tbatched_graph.ndata['feat'])
-            test_num_correct += (tpred.argmax(1) == tlabels).sum().item()
-            test_num_tests += len(tlabels)
+        for epoch in tqdm(range(epochs)):
+            #トレーニング
+            model.train()
+            for batched_grapg, labels in traindataloader:
+                batched_grapg = batched_grapg.to(device)
+                labels = labels.to(device)
+                pred = model(batched_grapg,batched_grapg.ndata['feat'])
+                loss=lossF(pred,labels)
 
-        Tacc = test_num_correct / test_num_tests
-        #print('Training accuracy:', Tacc)
-        test_acc_list.append(Tacc) #学習中テストacc
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-    save_train_acc_list.append(acc_list)
-    save_test_acc_list.append(test_acc_list)
-    num_correct = 0
-    num_tests = 0
+                num_correct += (pred.argmax(1) == labels).sum().item()
+                num_tests += len(labels)
+            train_loss_list.append(loss.item())
+            train_acc_list.append(num_correct / num_tests)
+            #カウントリセット
+            num_correct=num_tests=0
 
+            #テスト
+            model.eval()
+            for tbatched_graph, tlabels in testdataloader:
+                tbatched_graph = tbatched_graph.to(device)
+                tlabels = tlabels.to(device)
+                tpred = model(tbatched_graph, tbatched_graph.ndata['feat'])
+                test_num_correct += (tpred.argmax(1) == tlabels).sum().item()
+                test_num_tests += len(tlabels)
 
+            test_acc_list.append(test_num_correct/test_num_tests)
+            #カウントリセット
+            test_num_correct=test_num_tests=0
 
-    with torch.no_grad():
-        model.train()
-        for batched_graph, labels in traindataloader:
-            batched_graph = batched_graph.to(device)
-            labels = labels.to(device)
-            pred = model(batched_graph, batched_graph.ndata['feat'])
-            num_correct += (pred.argmax(1) == labels).sum().item()
-            num_tests += len(labels)
-        print('Training accuracy:', num_correct / num_tests)
-        save_train_acc.append(num_correct / num_tests)
-        num_correct = 0
-        num_tests = 0
-        model.eval()
-        for batched_graph, labels in testdataloader:
-            batched_graph = batched_graph.to(device)
-            labels = labels.to(device)
-            pred = model(batched_graph, batched_graph.ndata['feat'].float())
-            num_correct += (pred.argmax(1) == labels).sum().item()
-            num_tests += len(labels)
-        print('Test accuracy:', num_correct / num_tests)
-        save_test_acc.append(num_correct / num_tests)
+        #完全学習後の正答率の計算(推論)
+        with torch.no_grad():
+            #情報保存用の変数の初期化
+            #トレーニング用
+            num_correct=0
+            num_tests=0
+            save_train_acc=0
+            #テスト用
+            test_num_correct = 0
+            test_num_tests = 0
+            save_test_acc=0
+
+            #全トレーニングデータでの正答率計算
+            model.train()
+            for batched_graph, labels in traindataloader:
+                batched_graph = batched_graph.to(device)
+                labels = labels.to(device)
+                pred = model(batched_graph, batched_graph.ndata['feat'])
+                num_correct += (pred.argmax(1) == labels).sum().item()
+                num_tests += len(labels)
+            print('Training accuracy:', num_correct / num_tests)
+            save_train_acc=(num_correct / num_tests)
+
+            #全テストデータでの正答率
+            model.eval()
+            for batched_graph, labels in testdataloader:
+                batched_graph = batched_graph.to(device)
+                labels = labels.to(device)
+                pred = model(batched_graph, batched_graph.ndata['feat'])
+                test_num_correct += (pred.argmax(1) == labels).sum().item()
+                test_num_tests += len(labels)
+            print('Test accuracy:', test_num_correct / test_num_tests)
+            save_test_acc=(test_num_correct / test_num_tests)
+
+        #各エポックごとの損失・正答率の記録をモデルごとに.npy形式で保存
+        np.save(f'{save_dir}/train_loss_list',train_loss_list)
+        np.save(f'{save_dir}/train_acc_list',train_acc_list)
+        np.save(f'{save_dir}/test_acc_list',test_acc_list)
+        torch.save(model,f'{save_dir}/model_weight.pth')
+        #完全学習後のトレーニング・テストデータそれぞれの正答率を.yaml形式で保存
+        log={'train acc':save_train_acc,
+            'test acc':save_test_acc,
+            'epochs':epochs,
+            'config':model_config,
+            'date time':datetime.datetime.now(),
+            'run time':time.time() - start}
+            
+        with open(f'{save_dir}/acc_result.yaml',"w") as f:
+            yaml.dump(log,f)
+
+        torch.cuda.empty_cache()
