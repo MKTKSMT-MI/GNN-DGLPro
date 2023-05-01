@@ -115,7 +115,7 @@ for data_number in range(len(data_path)):
 
     #パラメータ設定
     lr=0.0001
-    epochs=2
+    epochs=10000
 
     #モデルの学習
     for model_name, model_config in config.items():
