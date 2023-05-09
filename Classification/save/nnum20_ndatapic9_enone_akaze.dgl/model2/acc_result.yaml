@@ -4,8 +4,8 @@ config:
   - 40
   input_size: 81
   output_size: 10
-date time: 2023-05-01 13:19:14.059446
-epochs: 2
-run time: 2.3408753871917725
-test acc: 0.1
-train acc: 0.1
+date time: 2023-05-01 17:47:58.314342
+epochs: 10000
+run time: 8486.328311443329
+test acc: 0.189
+train acc: 0.1892

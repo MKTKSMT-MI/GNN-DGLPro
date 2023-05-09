@@ -1,0 +1,12 @@
+config:
+  hidden_size:
+  - 160
+  - 80
+  - 40
+  input_size: 441
+  output_size: 10
+date time: 2023-05-05 22:16:01.790423
+epochs: 10000
+run time: 15238.266939878464
+test acc: 0.1
+train acc: 0.1
