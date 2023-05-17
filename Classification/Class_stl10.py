@@ -75,6 +75,7 @@ class DynamicGCN(nn.Module):
         self.input_layer=GraphConv(input_size,hidden_size[0])
         self.middle_layers=nn.ModuleList([GraphConv(hidden_size[i],hidden_size[i+1]) for i in range(len(hidden_size)-1)])
         self.output_layer=GraphConv(hidden_size[-1],output_size)
+        self.m=nn.LeakyReLU()
 
         self.flatt=nn.Flatten()
 
@@ -83,7 +84,8 @@ class DynamicGCN(nn.Module):
         n_feat=self.flatt(n_feat)
         h=self.input_layer(g,n_feat,None,e_feat).clamp(0)
         for layer in self.middle_layers:
-            h=layer(g,h).clamp(0)
+            h=layer(g,h)
+            h=self.m(h)
         h=self.output_layer(g,h).clamp(0)
         g.ndata['h'] = h
 
@@ -95,7 +97,7 @@ data_path=['nnum20_ndatapic9_enone_akaze.dgl',
            'nnum20_ndatapic21_enone_akaze.dgl',
            'nnum50_ndatapic9_enone_akaze.dgl',
            'nnum50_ndatapic21_enone_akaze.dgl']
-config_files=['Classification/config1.yaml','Classification/config2.yaml']
+config_files=['config1-2.yaml','config2-2.yaml']
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
@@ -106,11 +108,11 @@ for data_number in range(len(data_path)):
 
     #データローダー作成
     num_workers=2
-    traindataloader = GraphDataLoader(traindataset,batch_size = 50,shuffle = True,num_workers = num_workers,pin_memory = True)
+    traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
     testdataloader = GraphDataLoader(testdataset,batch_size = 1000,shuffle = True,num_workers = num_workers,pin_memory = True)
 
     #設定ファイル読み込み
-    with open(config_files[data_number%2],'r') as f:
+    with open('Classification/'+config_files[data_number%2],'r') as f:
         config=yaml.safe_load(f)
 
     #パラメータ設定
@@ -122,7 +124,7 @@ for data_number in range(len(data_path)):
         #時間計測
         start=time.time()
         #結果を保存するディレクトリを作成
-        save_dir=f'Classification/save/{data_path[data_number]}/{model_name}'
+        save_dir=f'Classification/save/{data_path[data_number]}/{config_files[data_number%2]}/{model_name}'
         os.makedirs(save_dir,exist_ok=True)
 
 
@@ -130,7 +132,7 @@ for data_number in range(len(data_path)):
         model=DynamicGCN(model_config['input_size'],model_config['hidden_size'],model_config['output_size'])
         model.to(device)
         lossF=nn.CrossEntropyLoss()
-        optimizer=optim.Adam(model.parameters(),lr=lr)
+        optimizer=optim.AdamW(model.parameters(),lr=lr)
 
         #情報保存用の変数の初期化
         #トレーニング用
@@ -141,6 +143,7 @@ for data_number in range(len(data_path)):
         #テスト用
         test_num_correct = 0
         test_num_tests = 0
+        best_acc=0
         test_acc_list = []
 
         for epoch in tqdm(range(epochs)):
@@ -173,6 +176,9 @@ for data_number in range(len(data_path)):
                 test_num_tests += len(tlabels)
 
             test_acc_list.append(test_num_correct/test_num_tests)
+            if best_acc < test_num_correct/test_num_tests:
+                best_acc = test_num_correct/test_num_tests
+                best_weight = model
             #カウントリセット
             test_num_correct=test_num_tests=0
 
@@ -215,11 +221,13 @@ for data_number in range(len(data_path)):
         np.save(f'{save_dir}/train_acc_list',train_acc_list)
         np.save(f'{save_dir}/test_acc_list',test_acc_list)
         torch.save(model,f'{save_dir}/model_weight.pth')
+        torch.save(best_weight,f'{save_dir}/best_model_weight.pth')
         #完全学習後のトレーニング・テストデータそれぞれの正答率を.yaml形式で保存
         log={'train acc':save_train_acc,
             'test acc':save_test_acc,
             'epochs':epochs,
             'config':model_config,
+            'best test acc':best_acc,
             'date time':datetime.datetime.now(),
             'run time':time.time() - start}
             
@@ -227,3 +235,4 @@ for data_number in range(len(data_path)):
             yaml.dump(log,f)
 
         torch.cuda.empty_cache()
+    break

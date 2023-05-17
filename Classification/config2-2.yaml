@@ -1,0 +1,49 @@
+model1:
+  input_size: 441
+  hidden_size: [441]
+  output_size: 10
+
+model2:
+  input_size: 441
+  hidden_size: [441,480]
+  output_size: 10
+
+model3:
+  input_size: 441
+  hidden_size: [450,500,520]
+  output_size: 10
+
+model4:
+  input_size: 441
+  hidden_size: [441,441,441]
+  output_size: 10
+
+model5:
+  input_size: 441
+  hidden_size: [441,460,480]
+  output_size: 10
+
+model6:
+  input_size: 441
+  hidden_size: [500,520,540]
+  output_size: 10
+
+model7:
+  input_size: 441
+  hidden_size: [512,512,512]
+  output_size: 10
+
+model8:
+  input_size: 441
+  hidden_size: [512,512,512,512]
+  output_size: 10
+
+model9:
+  input_size: 441
+  hidden_size: [512,512,1024,1024]
+  output_size: 10
+
+model10:
+  input_size: 441
+  hidden_size: [512,1024,512,1024]
+  output_size: 10

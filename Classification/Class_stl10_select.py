@@ -106,7 +106,7 @@ for data_number in range(len(data_path)):
 
     #データローダー作成
     num_workers=2
-    traindataloader = GraphDataLoader(traindataset,batch_size = 50,shuffle = True,num_workers = num_workers,pin_memory = True)
+    traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
     testdataloader = GraphDataLoader(testdataset,batch_size = 1000,shuffle = True,num_workers = num_workers,pin_memory = True)
 
     #設定ファイル読み込み
@@ -115,14 +115,14 @@ for data_number in range(len(data_path)):
 
     #パラメータ設定
     lr=0.0001
-    epochs=20000
+    epochs=10
 
     #モデルの学習
     for model_name, model_config in config.items():
         #時間計測
         start=time.time()
         #結果を保存するディレクトリを作成
-        save_dir=f'Classification/save/{data_path[data_number]}_select/{model_name}'
+        save_dir=f'Classification/save/{data_path[data_number]}_damy/{model_name}'
         os.makedirs(save_dir,exist_ok=True)
 
 
