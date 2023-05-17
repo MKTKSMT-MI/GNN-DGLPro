@@ -235,4 +235,3 @@ for data_number in range(len(data_path)):
             yaml.dump(log,f)
 
         torch.cuda.empty_cache()
-    break
