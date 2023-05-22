@@ -1,3 +1,4 @@
+best test acc: 0.5436
 config:
   hidden_size:
   - 500
@@ -5,8 +6,8 @@ config:
   - 540
   input_size: 441
   output_size: 10
-date time: 2023-05-17 18:12:15.319827
-epochs: 2
-run time: 3.5727126598358154
-test acc: 0.1
-train acc: 0.1
+date time: 2023-05-21 06:25:03.406960
+epochs: 10000
+run time: 12744.720797300339
+test acc: 0.5424
+train acc: 0.5424
