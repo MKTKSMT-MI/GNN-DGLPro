@@ -104,7 +104,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 for data_number in range(len(data_path)):
     #データ読み込み
     traindataset=STL10TrainDataset(f'./data/STL10 Datasets/train/{data_path[data_number]}')
-    testdataset=STL10TestDataset(f'./data/STL10 Datasets/train/{data_path[data_number]}')
+    testdataset=STL10TestDataset(f'./data/STL10 Datasets/test/{data_path[data_number]}')
 
     #データローダー作成
     num_workers=2
