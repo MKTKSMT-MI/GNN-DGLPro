@@ -1,0 +1,24 @@
+model1:
+  input_size: 784
+  hidden_size: [1000,1000,500]
+  output_size: 10
+
+model2:
+  input_size: 784
+  hidden_size: [1000,1000,1000]
+  output_size: 10
+
+model3:
+  input_size: 784
+  hidden_size: [1000,900,400]
+  output_size: 10
+
+model4:
+  input_size: 784
+  hidden_size: [1000,1000,1000]
+  output_size: 10
+
+model5:
+  input_size: 784
+  hidden_size: [1000,1000,500]
+  output_size: 10
