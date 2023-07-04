@@ -97,19 +97,19 @@ class PatchGCN(nn.Module):
 
 
 data_path='ndata_16patch.dgl'
-print(os.path.isfile(rf'data\STL10 Datasets\train\{data_path}'))
-print(os.path.isfile(rf'Classification\save\ndata_16patch.dgl\config4.yaml\model1\acc_result.yaml'))
+print(os.path.isfile(rf'data/STL10 Datasets/train/{data_path}'))
+print(os.path.isfile(rf'Classification/save/ndata_16patch.dgl/config4.yaml/model1/acc_result.yaml'))
 
 print('dataset start')
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-traindataset=STL10TrainDataset(rf'data\STL10 Datasets\train\{data_path}')
-testdataset=STL10TestDataset(rf'data\STL10 Datasets\test\{data_path}')
+traindataset=STL10TrainDataset(rf'data/STL10 Datasets/train/{data_path}')
+testdataset=STL10TestDataset(rf'data/STL10 Datasets/test/{data_path}')
 print('dataset complete')
 
 print('dataloader start')
 num_workers=0
 traindataloader = GraphDataLoader(traindataset,batch_size = 256,shuffle = True,num_workers = num_workers,pin_memory = True)
-testdataloader = GraphDataLoader(testdataset,batch_size = 1000,shuffle = True,num_workers = num_workers,pin_memory = True)
+testdataloader = GraphDataLoader(testdataset,batch_size = 100,shuffle = True,num_workers = num_workers,pin_memory = True)
 print('dataloader complete')
 
 
@@ -117,16 +117,16 @@ data_path='ndata_16patch.dgl'
 loop=True
 loop_num=1
 lr=0.0001
-epochs=10
-model_name='model1'
-save_dir=rf'Classification\save/{data_path}/config4.yaml/{model_name}_linear'
+epochs=1500
+model_name='model2'
+save_dir=rf'Classification/save/{data_path}/config4.yaml/{model_name}'
 os.makedirs(save_dir,exist_ok=True)
 while loop:
     print(f'loop: {loop_num}')
     start=time.time()
     
-    linear_on=True
-    model=PatchGCN(588,[512,256,128],10,linear_on)
+    linear_on=False
+    model=PatchGCN(588,[512,512,256,256,128,128],10,linear_on)
     model.to(device)
     lossF=nn.CrossEntropyLoss()
     optimizer=optim.AdamW(model.parameters(),lr=lr)
@@ -247,7 +247,7 @@ torch.save(best_weight.state_dict(),f'{save_dir}/best_model_weight.pth')
 log={'train acc':save_train_acc,
     'test acc':save_test_acc,
     'epochs':epochs,
-    'config':'588,[512,256,128],10',
+    'config':'588,[512,512,256,256,128,128],10',
     'best test acc':best_acc,
     'linear_on':str(linear_on),
     'date time':datetime.datetime.now(),

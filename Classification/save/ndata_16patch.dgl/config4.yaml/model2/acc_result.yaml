@@ -1,0 +1,8 @@
+best test acc: 0.483625
+config: 588,[512,512,256,256,128,128],10
+date time: 2023-07-04 16:12:07.870237
+epochs: 1500
+linear_on: 'False'
+run time: 4456.440361261368
+test acc: 0.47225
+train acc: 0.7248
