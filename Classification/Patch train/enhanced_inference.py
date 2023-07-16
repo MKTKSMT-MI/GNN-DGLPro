@@ -82,21 +82,21 @@ def main():
         testdataset = STL10TestDataset(f'./data/STL10 Datasets/test/{data_path}')
 
         #データローダー作成
-        num_workers=2
+        num_workers=0
         traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
         testdataloader = GraphDataLoader(testdataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
 
         #設定ファイル読み込み
         config_path='config4.yaml'
-        with open(f'config/{config_path}','r') as f:
+        with open(f'Classification/Patch train/config/{config_path}','r') as f:
             config = yaml.safe_load(f)
 
         #ハイパラ
         lr=0.0001
-        epochs=2000
+        epochs=2
 
         #学習推論開始
-        for model_name, model_config in config.item():
+        for model_name, model_config in config.items():
             #初期設定
             loop=True
             loop_num=1
@@ -132,9 +132,9 @@ def main():
                 for epoch in tqdm(range(epochs)):
                     model.train()
                     for batched_graph, labels in traindataloader:
-                        batched_grapg = batched_grapg.to(device)
+                        batched_graph =batched_graph.to(device)
                         labels = labels.to(device)
-                        pred = model(batched_grapg,batched_grapg.ndata['f'])
+                        pred = model(batched_graph,batched_graph.ndata['f'])
                         loss=lossF(pred,labels)
 
                         optimizer.zero_grad()
@@ -165,7 +165,7 @@ def main():
                         tbatched_graph = tbatched_graph.to(device)
                         tlabels = tlabels.to(device)
                         tpred = model(tbatched_graph, tbatched_graph.ndata['f'])
-                        tpred= F.softmax(tpred)
+                        tpred= F.softmax(tpred,dim=0)
                         test_num_correct += (tpred.argmax(1) == tlabels).sum().item()
                         test_num_tests += len(tlabels)
 
@@ -194,7 +194,7 @@ def main():
                         batched_graph = batched_graph.to(device)
                         labels = labels.to(device)
                         pred = model(batched_graph, batched_graph.ndata['f'])
-                        pred = F.softmax(pred)
+                        pred = F.softmax(pred,dim=0)
                         num_correct += (pred.argmax(1) == labels).sum().item()
                         num_tests += len(labels)
                     print('Training accuracy:', num_correct / num_tests)
@@ -206,7 +206,7 @@ def main():
                         batched_graph = batched_graph.to(device)
                         labels = labels.to(device)
                         pred = model(batched_graph, batched_graph.ndata['f'])
-                        pred = F.softmax(pred)
+                        pred = F.softmax(pred,dim=0)
                         test_num_correct += (pred.argmax(1) == labels).sum().item()
                         test_num_tests += len(labels)
                     print('Test accuracy:', test_num_correct / test_num_tests)
