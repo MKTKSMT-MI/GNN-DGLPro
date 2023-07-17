@@ -1,0 +1,22 @@
+best test acc: 0.1584
+config:
+  hidden_size:
+  - 720
+  - 720
+  - 720
+  - 512
+  - 512
+  - 512
+  - 256
+  - 256
+  - 256
+  - 64
+  - 6464
+  input_size: 144
+  output_size: 10
+date time: 2023-07-17 12:50:47.907859
+epochs: 10
+linear_on: 'True'
+run time: 21.616997003555298
+test acc: 0.1082
+train acc: 0.1055

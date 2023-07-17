@@ -68,7 +68,7 @@ class STL10TestDataset(DGLDataset):
 
 def main():
     #初期化
-    data_paths=['ndata_8patch100_gray_orig.dgl']
+    data_paths=['ndata_8patch_gray_orig.dgl']
     config_paths=['config4.yaml']
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -78,8 +78,8 @@ def main():
         if not os.path.exists(f'./data/STL10 Datasets/train/{data_path}'):
             print(f'{data_path} is nothing.')
             sys.exit()
-        traindataset = STL10TrainDataset(f'./data/STL10 Datasets/train/{data_path}')
-        testdataset = STL10TestDataset(f'./data/STL10 Datasets/test/{data_path}')
+        traindataset = STL10TrainDataset(f'./data/STL10 Datasets/test/{data_path}')
+        testdataset = STL10TestDataset(f'./data/STL10 Datasets/train/{data_path}')
 
         #データローダー作成
         num_workers=0
@@ -93,22 +93,27 @@ def main():
 
         #ハイパラ
         lr=0.0001
-        epochs=2
+        epochs=10000
 
         #学習推論開始
         for model_name, model_config in config.items():
             #初期設定
             loop=True
             loop_num=1
-            save_dir=rf'Classification/save/{data_path}/config4.yaml/{model_name}'
+            print(model_name)
+
+            linear_on=False
+            
+            if linear_on:
+                save_dir=rf'Classification/save/{data_path}/config4.yaml/{model_name}_linear'
+            else:
+                save_dir=rf'Classification/save/{data_path}/config4.yaml/{model_name}'
             os.makedirs(save_dir,exist_ok=True)
 
             #lossが10回以内に変化するまでモデルの初期化を繰り返す
             while loop:
                 print(f'loop: {loop_num}')
                 start = time.time()
-
-                linear_on=False
                 model=PatchGCN(model_config['input_size'],model_config['hidden_size'],model_config['output_size'],linear_on)
                 model.to(device)
                 lossF=nn.CrossEntropyLoss()

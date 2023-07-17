@@ -16,5 +16,9 @@ model4:
   output_size: 10
 model5:
   input_size: 144
-  hidden_size: [720,720,512,512,256,256,64,64]
+  hidden_size: [720,720,720,512,512,512,256,256,256,64,6464]
+  output_size: 10
+model6:
+  input_size: 144
+  hidden_size: [1024,1024,1024,1024,512,512,512,512,256,256,256,256,128,128,128,128,32,32,32,32]
   output_size: 10
