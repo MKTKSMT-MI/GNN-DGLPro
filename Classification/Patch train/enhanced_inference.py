@@ -83,7 +83,7 @@ def main():
 
         #データローダー作成
         num_workers=0
-        traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
+        traindataloader = GraphDataLoader(traindataset,batch_size = 1024,shuffle = True,num_workers = num_workers,pin_memory = True)
         testdataloader = GraphDataLoader(testdataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
 
         #設定ファイル読み込み
@@ -93,7 +93,7 @@ def main():
 
         #ハイパラ
         lr=0.0001
-        epochs=10000
+        epochs=2000
 
         #学習推論開始
         for model_name, model_config in config.items():
@@ -102,7 +102,7 @@ def main():
             loop_num=1
             print(model_name)
 
-            linear_on=False
+            linear_on=True
             
             if linear_on:
                 save_dir=rf'Classification/save/{data_path}/config4.yaml/{model_name}_linear'
