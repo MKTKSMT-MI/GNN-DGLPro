@@ -68,8 +68,8 @@ class STL10TestDataset(DGLDataset):
 
 def main():
     #初期化
-    data_paths=['ndata_8patch_gray_orig.dgl']
-    config_paths=['config4.yaml']
+    data_paths=['ndata_8patch_comp.dgl']
+    config_paths=['test config.yaml']
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     #データセット別ループ
@@ -81,19 +81,20 @@ def main():
         traindataset = STL10TrainDataset(f'./data/STL10 Datasets/test/{data_path}')
         testdataset = STL10TestDataset(f'./data/STL10 Datasets/train/{data_path}')
 
+        print(traindataset[0])
         #データローダー作成
         num_workers=0
-        traindataloader = GraphDataLoader(traindataset,batch_size = 1024,shuffle = True,num_workers = num_workers,pin_memory = True)
-        testdataloader = GraphDataLoader(testdataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
+        traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
+        testdataloader = GraphDataLoader(testdataset,batch_size = 64,shuffle = True,num_workers = num_workers,pin_memory = True)
 
         #設定ファイル読み込み
-        config_path='config4.yaml'
+        config_path='test config.yaml'
         with open(f'Classification/Patch train/config/{config_path}','r') as f:
             config = yaml.safe_load(f)
 
         #ハイパラ
         lr=0.0001
-        epochs=2000
+        epochs=50
 
         #学習推論開始
         for model_name, model_config in config.items():
