@@ -1,23 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+import torch
 
 def img2patch(image,patch_num,cmap='gray',views=False):
-    if image.shape[0]==3 or image.shape[0]==1:
-        c=image.shape[0]
-        image=image.permute(1,2,0)
-    else:
-        c=image.shape[2]
+    if views:        
+        if image.shape[0]==3 or image.shape[0]==1:
+            c=image.shape[0]
+            image=image.permute(1,2,0)
+        else:
+            c=image.shape[2]
 
-    size=image.shape[0]
-    patch_width=int(size/patch_num)
-    data=[]
+        size=image.shape[0]
+        patch_width=int(size/patch_num)
+        data=[]
 
-    for i in range(0,size,patch_width):
-        for j in range(0,size,patch_width):
-            data.append(image[i:i+patch_width,j:j+patch_width,:])
+        for i in range(0,size,patch_width):
+            for j in range(0,size,patch_width):
+                data.append(image[i:i+patch_width,j:j+patch_width,:])
 
-    if views:
         fig=plt.figure()
 
         for i in range(patch_num**2):
@@ -28,7 +28,17 @@ def img2patch(image,patch_num,cmap='gray',views=False):
         plt.tight_layout()
         plt.show()
 
-    return data
+        return data
+
+    else:
+        size=image.shape[1]
+        patch_width=int(size/patch_num)
+        data=[]
+
+        for i in range(0,size,patch_width):
+            for j in range(0,size,patch_width):
+                data.append(image[:,i:i+patch_width,j:j+patch_width])
+        return torch.stack(data)
 
 
 def objYN(data,patch_num,views=False):
