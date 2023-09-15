@@ -31,3 +31,12 @@ class PatchGCN(nn.Module):
         g.ndata['h'] = h
 
         return dgl.mean_nodes(g,'h')
+    
+
+class PatchGAT(nn.Module):
+    def __init__(self,input_size,hidden_size,output_size,linear=False):
+        super(PatchGAT,self).__init__()
+        self.linear_on=linear
+
+    def forward(self,g,n_feat,e_feat=None):
+        pass
