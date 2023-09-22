@@ -84,7 +84,7 @@ def main():
         print(traindataset[0])
         #データローダー作成
         num_workers=0
-        traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
+        traindataloader = GraphDataLoader(traindataset,batch_size = 256,shuffle = True,num_workers = num_workers,pin_memory = True)
         testdataloader = GraphDataLoader(testdataset,batch_size = 64,shuffle = True,num_workers = num_workers,pin_memory = True)
 
         #設定ファイル読み込み
@@ -93,8 +93,8 @@ def main():
             config = yaml.safe_load(f)
 
         #ハイパラ
-        lr=0.0001
-        epochs=5
+        lr=0.001
+        epochs=50
 
         #学習推論開始
         for model_name, model_config in config.items():
@@ -115,7 +115,7 @@ def main():
             while loop:
                 print(f'loop: {loop_num}')
                 start = time.time()
-                model=PatchGAT(model_config['input_size'],model_config['hidden_size'],model_config['output_size'],2,linear_on)
+                model=PatchGAT(model_config['input_size'],model_config['hidden_size'],model_config['output_size'],6,linear_on)
                 model.to(device)
                 lossF=nn.CrossEntropyLoss()
                 optimizer=optim.AdamW(model.parameters(), lr=lr)
@@ -141,6 +141,7 @@ def main():
                         batched_graph =batched_graph.to(device)
                         labels = labels.to(device)
                         pred = model(batched_graph,batched_graph.ndata['f'])
+                        #print(f'pred shape: {pred.shape}')
                         loss=lossF(pred,labels)
 
                         optimizer.zero_grad()

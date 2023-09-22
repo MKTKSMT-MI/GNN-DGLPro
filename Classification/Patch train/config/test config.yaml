@@ -1,4 +1,4 @@
 model1:
   input_size: 2352
-  hidden_size: [100,100]
+  hidden_size: [200,100,100]
   output_size: 10

@@ -37,10 +37,11 @@ class PatchGAT(nn.Module):
     def __init__(self,input_size,hidden_size,output_size,num_head,linear=False):
         super(PatchGAT,self).__init__()
         self.linear_on=linear
+        self.sum_k=len(hidden_size)+1
         self.input_layer=GATConv(input_size,hidden_size[0],num_head)
         self.middle_layers=nn.ModuleList([GATConv(hidden_size[i],hidden_size[i+1],num_head) for i in range(len(hidden_size)-1)])
         self.output_layer=GATConv(hidden_size[-1],output_size,num_head)
-
+        self.fc=nn.Linear((num_head**self.sum_k)*output_size,output_size)
         self.m=nn.LeakyReLU()
 
         self.flatt=nn.Flatten()
@@ -54,7 +55,8 @@ class PatchGAT(nn.Module):
             h=self.m(h)
         h=self.output_layer(g,h)
         h=self.m(h)
+        h=self.flatt(h)
+        h=self.fc(h)
         g.ndata['h'] = h
         
-        return h
         return dgl.mean_nodes(g,'h')
