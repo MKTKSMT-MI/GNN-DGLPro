@@ -47,7 +47,7 @@ class PatchGAT(nn.Module):
 
     def forward(self,g,n_feat,e_feat=None):
         n_feat=self.flatt(n_feat)
-        h=self.input_layer(g,n_feat,None,e_feat)
+        h=self.input_layer(g,n_feat)
         h=self.m(h)
         for i,layer in enumerate(self.middle_layers):
             h=layer(g,h)
@@ -55,6 +55,6 @@ class PatchGAT(nn.Module):
         h=self.output_layer(g,h)
         h=self.m(h)
         g.ndata['h'] = h
-
+        
+        return h
         return dgl.mean_nodes(g,'h')
-        pass

@@ -17,7 +17,7 @@ import sys
 import yaml
 import datetime
 
-from models import PatchGCN
+from models import PatchGCN,PatchGAT
 import modules
 
 
@@ -68,7 +68,7 @@ class STL10TestDataset(DGLDataset):
 
 def main():
     #初期化
-    data_paths=['ndata_8patch_comp.dgl']
+    data_paths=['ndata_8patch.dgl']
     config_paths=['test config.yaml']
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -94,7 +94,7 @@ def main():
 
         #ハイパラ
         lr=0.0001
-        epochs=50
+        epochs=5
 
         #学習推論開始
         for model_name, model_config in config.items():
@@ -106,16 +106,16 @@ def main():
             linear_on=True
             
             if linear_on:
-                save_dir=rf'Classification/save/{data_path}/config4.yaml/{model_name}_linear'
+                save_dir=rf'Classification/save/{data_path}/GATConv/{model_name}_linear'
             else:
-                save_dir=rf'Classification/save/{data_path}/config4.yaml/{model_name}'
+                save_dir=rf'Classification/save/{data_path}/GATConv/{model_name}'
             os.makedirs(save_dir,exist_ok=True)
 
             #lossが10回以内に変化するまでモデルの初期化を繰り返す
             while loop:
                 print(f'loop: {loop_num}')
                 start = time.time()
-                model=PatchGCN(model_config['input_size'],model_config['hidden_size'],model_config['output_size'],linear_on)
+                model=PatchGAT(model_config['input_size'],model_config['hidden_size'],model_config['output_size'],2,linear_on)
                 model.to(device)
                 lossF=nn.CrossEntropyLoss()
                 optimizer=optim.AdamW(model.parameters(), lr=lr)
