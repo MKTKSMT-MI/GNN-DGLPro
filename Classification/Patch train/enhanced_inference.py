@@ -10,6 +10,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 import numpy as np
 import time
 import os
@@ -70,31 +71,31 @@ def main():
     #初期化
     data_paths=['ndata_8patch.dgl']
     config_paths=['test config.yaml']
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     
     #データセット別ループ
     for data_path in data_paths:
         #データセット読み込み
-        if not os.path.exists(f'../../data/STL10 Datasets/train/{data_path}'):
+        if not os.path.exists(f'GNN-DGLPro/data/STL10 Datasets/train/{data_path}'):
             print(f'{data_path} is nothing.')
             sys.exit()
-        traindataset = STL10TrainDataset(f'../../data/STL10 Datasets/test/{data_path}')
-        testdataset = STL10TestDataset(f'../../data/STL10 Datasets/train/{data_path}')
+        traindataset = STL10TrainDataset(f'GNN-DGLPro/data/STL10 Datasets/test/{data_path}')
+        testdataset = STL10TestDataset(f'GNN-DGLPro/data/STL10 Datasets/train/{data_path}')
 
         print(traindataset[0])
         #データローダー作成
         num_workers=0
-        traindataloader = GraphDataLoader(traindataset,batch_size = 256,shuffle = True,num_workers = num_workers,pin_memory = True)
+        traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
         testdataloader = GraphDataLoader(testdataset,batch_size = 64,shuffle = True,num_workers = num_workers,pin_memory = True)
 
         #設定ファイル読み込み
         config_path='test config.yaml'
-        with open(f'Classification/Patch train/config/{config_path}','r') as f:
+        with open(f'GNN-DGLPro/Classification/Patch train/config/{config_path}','r') as f:
             config = yaml.safe_load(f)
 
         #ハイパラ
         lr=0.001
-        epochs=5
+        epochs=300
 
         #学習推論開始
         for model_name, model_config in config.items():
@@ -106,16 +107,16 @@ def main():
             linear_on=True
             
             if linear_on:
-                save_dir=rf'Classification/save/{data_path}/GATConv/{model_name}_linear'
+                save_dir=rf'GNN-DGLPro/Classification/save/{data_path}/GATConv/{model_name}.3_linear'
             else:
-                save_dir=rf'Classification/save/{data_path}/GATConv/{model_name}'
+                save_dir=rf'GNN-DGLPro/Classification/save/{data_path}/GATConv/{model_name}'
             os.makedirs(save_dir,exist_ok=True)
 
             #lossが10回以内に変化するまでモデルの初期化を繰り返す
             while loop:
                 print(f'loop: {loop_num}')
                 start = time.time()
-                model=PatchGAT(model_config['input_size'],model_config['hidden_size'],model_config['output_size'],6,linear_on)
+                model=PatchGAT(model_config['input_size'], model_config['hidden_size'], model_config['output_size'], 4, linear_on)
                 model.to(device)
                 lossF=nn.CrossEntropyLoss()
                 optimizer=optim.AdamW(model.parameters(), lr=lr)
@@ -227,6 +228,13 @@ def main():
             np.save(f'{save_dir}/test_acc_list',test_acc_list)
             torch.save(model.state_dict(),f'{save_dir}/model_weight.pth')
             torch.save(best_weight.state_dict(),f'{save_dir}/best_model_weight.pth')
+
+            #保存したnpyを画像にプロット＆保存
+            TrainAccPlot(train_acc_list,save_dir)
+            TrainLossPlot(train_loss_list,save_dir)
+            TestAccPlot(test_acc_list,save_dir)
+            TrainTestAccPlot(train_acc_list,test_acc_list,save_dir)
+
             #完全学習後のトレーニング・テストデータそれぞれの正答率を.yaml形式で保存
             log={'train acc':save_train_acc,
                 'test acc':save_test_acc,
@@ -241,6 +249,75 @@ def main():
                 yaml.dump(log,f)
 
             torch.cuda.empty_cache()
+
+def TestAccPlot(data,dir):
+    data=np.array(data)
+    x=[j for j in range(data.shape[0])]
+    y=data
+
+    fig=plt.figure()
+    ax=fig.add_subplot()
+    ax.plot(x,y)
+    ax.set_title('Test accuracy')
+    ax.set_xlabel('epochs')
+    ax.set_ylabel('accuracy')
+    ax.set_xlim(0,data.shape[0])
+    ax.set_ylim(0,1)
+    fig.savefig(f'{dir}/test_acc.jpg',dpi=300)
+    plt.close()
+
+
+def TrainAccPlot(data,dir):
+    data=np.array(data)
+    x=[j for j in range(data.shape[0])]
+    y=data
+
+    fig=plt.figure()
+    ax=fig.add_subplot()
+    ax.plot(x,y)
+    ax.set_title('Train accuracy')
+    ax.set_xlabel('epochs')
+    ax.set_ylabel('accuracy')
+    ax.set_xlim(0,data.shape[0])
+    ax.set_ylim(0,1)
+    fig.savefig(f'{dir}/train_acc.jpg',dpi=300)
+    plt.close()
+
+
+def TrainLossPlot(data,dir):
+    data=np.array(data)
+    x=[j for j in range(data.shape[0])]
+    y=data
+
+    fig=plt.figure()
+    ax=fig.add_subplot()
+    ax.plot(x,y)
+    ax.set_title('Train loss')
+    ax.set_xlabel('epochs')
+    ax.set_ylabel('loss')
+    ax.set_xlim(0,data.shape[0])
+    fig.savefig(f'{dir}/train_loss.jpg',dpi=300)
+    plt.close()
+
+
+def TrainTestAccPlot(traindata,testdata,dir):
+    traindata=np.array(traindata)
+    testdata=np.array(testdata)
+    x=[j for j in range(traindata.shape[0])]
+
+    fig=plt.figure()
+    ax=fig.add_subplot()
+    ax.plot(x,traindata,label='Train accuracy')
+    ax.plot(x,testdata,label='Test accuracy')
+    ax.legend()
+
+    ax.set_title('Train & Test accuracy')
+    ax.set_xlabel('epochs')
+    ax.set_ylabel('accuracy')
+    ax.set_xlim(0,traindata.shape[0])
+    ax.set_ylim(0,1)
+    fig.savefig(f'{dir}/train_test_acc.jpg',dpi=300)
+    plt.close()
 
 
 if __name__ == '__main__':
