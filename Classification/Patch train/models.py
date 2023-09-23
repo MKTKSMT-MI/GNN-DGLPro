@@ -38,7 +38,7 @@ class PatchGAT(nn.Module):
         super(PatchGAT,self).__init__()
         self.linear_on=linear
         self.sum_k=len(hidden_size)+1
-        self.input_layer=GATConv(input_size, hidden_size[0], num_head, feat_drop=0.2)
+        self.input_layer=GATConv(input_size, hidden_size[0], num_head, feat_drop=0.4, residual=True)
         self.middle_layers=nn.ModuleList([GATConv(hidden_size[i], hidden_size[i+1], num_head, feat_drop=0.2) for i in range(len(hidden_size)-1)])
         self.output_layer=GATConv(hidden_size[-1], output_size, num_head, feat_drop=0.2)
         self.fc=nn.Linear((num_head**self.sum_k)*output_size,output_size)
