@@ -71,15 +71,15 @@ def main():
     data_paths=['ndata_8patch.dgl']
     config_paths=['test config.yaml']
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
+    
     #データセット別ループ
     for data_path in data_paths:
         #データセット読み込み
-        if not os.path.exists(f'./data/STL10 Datasets/train/{data_path}'):
+        if not os.path.exists(f'../../data/STL10 Datasets/train/{data_path}'):
             print(f'{data_path} is nothing.')
             sys.exit()
-        traindataset = STL10TrainDataset(f'./data/STL10 Datasets/test/{data_path}')
-        testdataset = STL10TestDataset(f'./data/STL10 Datasets/train/{data_path}')
+        traindataset = STL10TrainDataset(f'../../data/STL10 Datasets/test/{data_path}')
+        testdataset = STL10TestDataset(f'../../data/STL10 Datasets/train/{data_path}')
 
         print(traindataset[0])
         #データローダー作成
@@ -94,7 +94,7 @@ def main():
 
         #ハイパラ
         lr=0.001
-        epochs=50
+        epochs=5
 
         #学習推論開始
         for model_name, model_config in config.items():
