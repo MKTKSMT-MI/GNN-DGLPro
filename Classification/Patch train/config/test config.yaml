@@ -1,8 +1,8 @@
 model1:
   input_size: 2352
-  hidden_size: [256,256,128,128]
+  hidden_size: [512,256,128,64]
   output_size: 10
-  num_heads: 5
+  num_heads: 4
 model2:
   input_size: 2352
   hidden_size: [256,256,128,128]
@@ -10,16 +10,16 @@ model2:
   num_heads: 4
 model3:
   input_size: 2352
-  hidden_size: [256,256,128,128]
+  hidden_size: [256,128,128,128]
   output_size: 10
-  num_heads: 3
+  num_heads: 4
 model4:
   input_size: 2352
-  hidden_size: [256,256,128,128]
+  hidden_size: [256,256,256,128]
   output_size: 10
-  num_heads: 2
+  num_heads: 4
 model5:
   input_size: 2352
-  hidden_size: [128,128]
+  hidden_size: [512,256,128,64,32]
   output_size: 10
   num_heads: 4
