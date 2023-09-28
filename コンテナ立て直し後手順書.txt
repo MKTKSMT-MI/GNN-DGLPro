@@ -25,3 +25,8 @@ proxy = http://wwwproxy.osakac.ac.jp:8080
 
 5．パッケージのインストール
 仮想環境を切り替えて適宜必要なパッケージをインストールする。
+
+6．git設定
+プルやプッシュができないので以下コマンドをbashで入力
+git config --global user.name MKTKSMT-MI
+git config --global user.email mi22a004@oecu.jp
