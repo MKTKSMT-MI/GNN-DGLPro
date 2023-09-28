@@ -1,9 +1,3 @@
-def main():
-    print('This is main')
-    sam()
+import dgl
 
-def sam():
-    print('This is sam')
-
-if __name__ == '__main__':
-    main()
+print('Hello')
