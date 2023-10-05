@@ -18,7 +18,7 @@ import sys
 import yaml
 import datetime
 
-from models import PatchGCN,PatchGAT,PatchGATv2
+from models import PatchGCN,PatchGAT,PatchGATv2,PatchGCN2
 import modules
 
 
@@ -71,7 +71,7 @@ def main():
     #初期化
     data_paths=['ndata_8patch.dgl']
     config_paths=['test config.yaml']
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     
     #データセット別ループ
     for data_path in data_paths:
@@ -85,7 +85,7 @@ def main():
         print(traindataset[0])
         #データローダー作成
         num_workers=0
-        traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
+        traindataloader = GraphDataLoader(traindataset,batch_size = 256,shuffle = True,num_workers = num_workers,pin_memory = True)
         testdataloader = GraphDataLoader(testdataset,batch_size = 64,shuffle = True,num_workers = num_workers,pin_memory = True)
 
         #設定ファイル読み込み
@@ -95,12 +95,10 @@ def main():
 
         #ハイパラ
         lr=0.001
-        epochs=100
+        epochs=200
 
         #学習推論開始
         for model_name, model_config in config.items():
-            if model_name!='model5':
-                continue
             #初期設定
             loop=True
             loop_num=1
@@ -109,7 +107,7 @@ def main():
             linear_on=True
             
             if linear_on:
-                save_dir=rf'GNN-DGLPro/Classification/save/{data_path}/GATConv/{config_path}/{model_name}.5_linear'
+                save_dir=rf'GNN-DGLPro/Classification/save/{data_path}/GATConv/{config_path}/{model_name}.true_linear'
             else:
                 save_dir=rf'GNN-DGLPro/Classification/save/{data_path}/GATConv/{model_name}'
             os.makedirs(save_dir,exist_ok=True)
@@ -118,7 +116,7 @@ def main():
             while loop:
                 print(f'loop: {loop_num}')
                 start = time.time()
-                model=PatchGATv2(model_config['input_size'], model_config['hidden_size'], model_config['output_size'], model_config['num_heads'], linear_on)
+                model=PatchGCN2(model_config['input_size'], model_config['hidden_size'], model_config['output_size'],linear_on)
                 model.to(device)
                 lossF=nn.CrossEntropyLoss()
                 optimizer=optim.AdamW(model.parameters(), lr=lr)
