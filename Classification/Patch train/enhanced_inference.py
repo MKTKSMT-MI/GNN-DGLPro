@@ -69,8 +69,8 @@ class STL10TestDataset(DGLDataset):
 
 def main():
     #初期化
-    data_paths=['ndata_16patch.dgl']
-    config_paths=['test config.yaml']
+    data_paths=['ndata_16patch_gray.dgl']
+    config_paths=['gray test config.yaml']
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     
     #データセット別ループ
@@ -89,13 +89,13 @@ def main():
         testdataloader = GraphDataLoader(testdataset,batch_size = 64,shuffle = True,num_workers = num_workers,pin_memory = True)
 
         #設定ファイル読み込み
-        config_path='test config.yaml'
+        config_path='gray test config.yaml'
         with open(f'GNN-DGLPro/Classification/Patch train/config/{config_path}','r') as f:
             config = yaml.safe_load(f)
 
         #ハイパラ
         lr=0.001
-        epochs=100
+        epochs=50
 
         #学習推論開始
         for model_name, model_config in config.items():

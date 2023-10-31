@@ -1,0 +1,5 @@
+model1:
+  input_size: 196
+  hidden_size: [512,64]
+  output_size: 10
+  num_heads: 4
