@@ -69,9 +69,9 @@ class STL10TestDataset(DGLDataset):
 
 def main():
     #初期化
-    data_paths=['ndata_16patch_gray.dgl']
+    data_paths=['ndata_8patch_gray.dgl']
     config_paths=['gray test config.yaml']
-    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     #データセット別ループ
     for data_path in data_paths:
