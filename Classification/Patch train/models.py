@@ -39,15 +39,15 @@ class PatchGAT(nn.Module):
         super(PatchGAT,self).__init__()
         self.linear_on=linear
 
-        self.input_layer=GATConv(input_size, hidden_size[0], num_head, feat_drop=0.2) #inputsize => hiddensize0 * numhead
+        self.input_layer=GATConv(input_size, hidden_size[0], num_head, feat_drop=0.2,residual=True) #inputsize => hiddensize0 * numhead
         self.input_Dence_layer=nn.Linear(hidden_size[0]*num_head,hidden_size[0]) #hiddensize0 * numhead => hiddensize0
 
-        self.middle_layers=nn.ModuleList([GATConv(hidden_size[i], hidden_size[i+1], num_head, feat_drop=0.4) for i in range(len(hidden_size)-1)])
+        self.middle_layers=nn.ModuleList([GATConv(hidden_size[i], hidden_size[i+1], num_head, feat_drop=0.02*(i+2),residual=True) for i in range(len(hidden_size)-1)])
         self.catDence_layers=nn.ModuleList([nn.Linear(hidden_size[i]*num_head,hidden_size[i]) for i in range(1,len(hidden_size))])
                 
-        self.output_layer=GATConv(hidden_size[-1], output_size, num_head, feat_drop=0.4)
+        self.output_layer=GATConv(hidden_size[-1], output_size, num_head, feat_drop=0.6,residual=True)
         
-        self.m=nn.LeakyReLU()
+        self.m=nn.ReLU()
 
         self.flatt=nn.Flatten()
 

@@ -71,7 +71,7 @@ def main():
     #初期化
     data_paths=['ndata_8patch_gray.dgl']
     config_paths=['gray test config.yaml']
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     
     #データセット別ループ
     for data_path in data_paths:
@@ -85,7 +85,7 @@ def main():
         print(traindataset[0])
         #データローダー作成
         num_workers=0
-        traindataloader = GraphDataLoader(traindataset,batch_size = 512,shuffle = True,num_workers = num_workers,pin_memory = True)
+        traindataloader = GraphDataLoader(traindataset,batch_size = 1024,shuffle = True,num_workers = num_workers,pin_memory = True)
         testdataloader = GraphDataLoader(testdataset,batch_size = 64,shuffle = True,num_workers = num_workers,pin_memory = True)
 
         #設定ファイル読み込み
@@ -94,7 +94,7 @@ def main():
             config = yaml.safe_load(f)
 
         #ハイパラ
-        lr=0.001
+        lr=0.0001
         epochs=50
 
         #学習推論開始
@@ -169,13 +169,14 @@ def main():
 
                     #学習途中でのテストデータの正答率計算
                     model.eval()
-                    for tbatched_graph, tlabels in testdataloader:
-                        tbatched_graph = tbatched_graph.to(device)
-                        tlabels = tlabels.to(device)
-                        tpred = model(tbatched_graph, tbatched_graph.ndata['f'])
-                        tpred= F.softmax(tpred,dim=0)
-                        test_num_correct += (tpred.argmax(1) == tlabels).sum().item()
-                        test_num_tests += len(tlabels)
+                    with torch.no_grad():
+                        for tbatched_graph, tlabels in testdataloader:
+                            tbatched_graph = tbatched_graph.to(device)
+                            tlabels = tlabels.to(device)
+                            tpred = model(tbatched_graph, tbatched_graph.ndata['f'])
+                            tpred= F.softmax(tpred,dim=0)
+                            test_num_correct += (tpred.argmax(1) == tlabels).sum().item()
+                            test_num_tests += len(tlabels)
 
                     test_acc_list.append(test_num_correct/test_num_tests)
                     if best_acc < (test_num_correct/test_num_tests):
