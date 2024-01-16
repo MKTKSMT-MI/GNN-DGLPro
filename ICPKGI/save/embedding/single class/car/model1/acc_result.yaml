@@ -1,23 +1,12 @@
 best test acc: 0.5
 config:
   hidden_size:
-  - 1024
-  - 1024
-  - 1024
-  - 1024
-  - 512
-  - 512
-  - 512
-  - 512
-  - 128
-  - 128
-  - 128
-  - 128
+  - 10
   input_size: 1024
   num_heads: 3
   output_size: 5
-date time: 2024-01-15 18:14:19.233465
-epochs: 100
-run time: 37.58778142929077
+date time: 2024-01-16 19:00:18.682937
+epochs: 10
+run time: 1.8592476844787598
 test acc: 0.5
-train acc: 0.49929278642149927
+train acc: 0.49787835926449786
