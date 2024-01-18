@@ -5,8 +5,8 @@ config:
   input_size: 1024
   num_heads: 3
   output_size: 5
-date time: 2024-01-17 23:34:41.521236
+date time: 2024-01-18 12:13:40.612464
 epochs: 10
-run time: 2.7437222003936768
+run time: 1.7579913139343262
 test acc: 0.44
 train acc: 0.42923794712286156
