@@ -1,5 +1,5 @@
 model1:
   input_size: 1024
-  hidden_size: [256,256]
+  hidden_size: [512,512,512,256,128,64]
   output_size: 5
   num_heads: 3
