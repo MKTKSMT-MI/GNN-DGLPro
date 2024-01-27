@@ -6,28 +6,41 @@ from dgl.nn import GraphConv,GATConv,SAGEConv
 
 
 class PatchGCN(nn.Module):
-    def __init__(self, input_size,hidden_size,output_size):
+    def __init__(self,input_size,hidden_size,output_size,liner=False,embedding = False):
         super(PatchGCN,self).__init__()
-        self.input_layer=GraphConv(input_size,hidden_size[0])
+        self.embedding=embedding
+
+        self.input_layer=SAGEConv(input_size,hidden_size[0], aggregator_type='mean')
         self.middle_layers=nn.ModuleList([GraphConv(hidden_size[i],hidden_size[i+1]) for i in range(len(hidden_size)-1)])
         self.output_layer=GraphConv(hidden_size[-1],output_size)
-        
+        if liner==True:
+            self.liner_on = True
+            self.liner_layers=nn.ModuleList([nn.Liner(hidden_size[i],hidden_size[i]) for i in range(len(hidden_size))])
+        else:
+            self.liner_on =False
         self.m=nn.LeakyReLU()
+
         self.flatt=nn.Flatten()
 
     
-    def forward(self,g,n_feat):
+    def forward(self,g,n_feat,e_feat=None):
         n_feat=self.flatt(n_feat)
         h=self.input_layer(g,n_feat)
         h=self.m(h)
         for i,layer in enumerate(self.middle_layers):
+            if self.liner_on==True:
+                h=self.liner_layers[i](h)
             h=layer(g,h)
             h=self.m(h)
+        g.ndata['emb'] = h
         h=self.output_layer(g,h)
-        h=self.m(h)
         g.ndata['h'] = h
 
-        return g
+        
+        if self.embedding:
+            return dgl.mean_nodes(g,'h'),dgl.mean_nodes(g,'emb')
+        else:
+            return dgl.mean_nodes(g,'h')
     
 
 
@@ -90,4 +103,29 @@ class PatchGAT(nn.Module):
         h=torch.mean(h,-2)
         h=self.m(h)
         g.ndata['h'] = h
+        return g
+    
+
+class EmbeddingNetwork(nn.Module):
+    def __init__(self, in_feats, hidden_feats, out_feats):
+        super(EmbeddingNetwork, self).__init__()
+        self.conv1 = SAGEConv(in_feats, hidden_feats, aggregator_type='mean')
+        self.conv2 = SAGEConv(hidden_feats, hidden_feats, aggregator_type='mean')
+        self.conv3 = SAGEConv(hidden_feats, out_feats, aggregator_type='mean')
+        '''self.conv1 = GraphConv(in_feats, hidden_feats)
+        self.conv2 = GraphConv(hidden_feats, hidden_feats)'''
+        self.flatt=nn.Flatten()
+
+    def forward(self, g, features):
+        '''x=self.flatt(features)
+        x = torch.relu(self.conv1(g, x))
+        x = self.conv2(g, x)
+        #x = self.conv3(g,x)'''
+        
+        x = self.flatt(features)
+        x = torch.relu(self.conv1(g,x))
+        x = torch.relu(self.conv2(g,x))
+        x = self.conv3(g,x)
+
+        g.ndata['h'] = x
         return g
