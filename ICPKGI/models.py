@@ -38,7 +38,7 @@ class PatchGCN(nn.Module):
 
         
         if self.embedding:
-            return dgl.mean_nodes(g,'h'),dgl.mean_nodes(g,'emb')
+            return dgl.mean_nodes(g,'h'),g
         else:
             return dgl.mean_nodes(g,'h')
     
