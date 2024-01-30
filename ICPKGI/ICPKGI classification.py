@@ -22,13 +22,13 @@ import os
 import yaml
 import time
 import datetime
-from modules import ICPKGIDataset
+from modules import ICPKGIDataset,TrainAccPlot,TrainLossPlot,TestAccPlot,TrainTestAccPlot
 from models import PatchGCN
 
 
 
 device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
-object_name = 'airplane'  #car bus airplane
+object_name = 'bus'  #car bus airplane
 setting_file = "config2.yaml"
 
 #データ読み込み
@@ -39,7 +39,7 @@ labels=[i.item() for _,i in dataset]
 traindataset, testdataset, trainlabels, testlabels=train_test_split(dataset,labels,test_size=0.2,shuffle=True,stratify=labels)
 
 #データローダー作成
-traindataloader=GraphDataLoader(traindataset,batch_size=16,shuffle=True,num_workers = 0,pin_memory = True)
+traindataloader=GraphDataLoader(traindataset,batch_size=1024,shuffle=True,num_workers = 0,pin_memory = True)
 testdataloader=GraphDataLoader(testdataset,batch_size=10,shuffle=True,num_workers = 0,pin_memory = True)
 
 #全学習を通して変わらない事前情報
@@ -58,7 +58,7 @@ model.to(device)'''
 
 #パラメータ設定
 lr = 0.0001
-epochs = 20
+epochs = 500
 get_embedding=True
 cos=nn.CosineSimilarity(-1)
 
@@ -75,7 +75,7 @@ for model_name, model_config in config.items():
 
     #モデルの初期化
     #model=PatchGCN(model_config['input_size'],model_config['hidden_size'],model_config['output_size'])
-    model=PatchGCN(1024,[8],5,embedding=get_embedding)
+    model=PatchGCN(1024,[512,256,256,128],5,embedding=get_embedding)
     model.to(device)
     lossF=nn.CrossEntropyLoss()
     optimizer=optim.AdamW(model.parameters(),lr=lr)
@@ -120,17 +120,16 @@ for model_name, model_config in config.items():
         num_correct=num_tests=loss_correct=0
 
         #類似度分類
-        direction_graphs=torch.zeros(5,64,8) #中間層の出力のクラス特徴を保存するリスト
+        direction_graphs=torch.zeros(5,64,128) #中間層の出力のクラス特徴を保存するリスト
         for emb_graph,emb_label in zip(train_emb_graphs,train_emb_labels):
             #中間層の出力をラベル数で割ってクラスインデックスに加算する
             direction_graphs[emb_label]+=((emb_graph.ndata['emb'])/train_label_num[emb_label]).to('cpu')
         #print(f'direction_graphs shape:{direction_graphs.shape}')
         #print(f'direction_labels:{train_label_num}')
         
-
+        #テスト
         test_emb_graphs=[]
         test_emb_labels=[]
-        #テスト
         model.eval()
         for tbatched_graph, tlabels in testdataloader:
             test_emb_labels.extend(tlabels.tolist())
@@ -158,5 +157,27 @@ for model_name, model_config in config.items():
         #print(f'test embedding acc:{test_emb_acc*100}%')
         test_emb_acc_list.append(test_emb_acc)
     print(f'{epochs} acc : {test_emb_acc*100}')
+    #各エポックごとの損失・正答率の記録をモデルごとに.npy形式で保存
+    np.save(f'{save_dir}/train_loss_list',train_loss_list)
+    np.save(f'{save_dir}/train_acc_list',train_acc_list)
+    np.save(f'{save_dir}/test_acc_list',test_acc_list)
+    torch.save(model,f'{save_dir}/model_weight.pth')
+    torch.save(best_weight,f'{save_dir}/best_model_weight.pth')
+    #保存したnpyを画像にプロット＆保存
+    TrainAccPlot(train_acc_list,save_dir)
+    TrainLossPlot(train_loss_list,save_dir)
+    TestAccPlot(test_acc_list,save_dir)
+    TrainTestAccPlot(train_acc_list,test_acc_list,save_dir)
+    #完全学習後のトレーニング・テストデータそれぞれの正答率を.yaml形式で保存
+    log={
+        'epochs':epochs,
+        'config':model_config,
+        'best test acc':best_acc,
+        'date time':datetime.datetime.now(),
+        'run time':time.time() - start}
+        
+    with open(f'{save_dir}/acc_result.yaml',"w") as f:
+        yaml.dump(log,f)
     plt.plot(range((epochs)),test_emb_acc_list)
-    plt.show()
+    plt.savefig(f'{save_dir}/emb_acc.jpg',dpi=300)
+    plt.close()
