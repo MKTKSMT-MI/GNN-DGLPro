@@ -78,14 +78,14 @@ class MultiPatchGCN(nn.Module):
 
         #出力層-物体
         o=self.object_output_layer(g,h)
-        g.ndata['o'] = o
+        g.ndata['oc'] = o
 
         #出力層-方向
         d=self.direction_output_layer(g,h)
-        g.ndata['d']=d
+        g.ndata['dc']=d
 
         
-        return dgl.mean_nodes(g,'o'),dgl.mean_nodes(g,'d'),g
+        return dgl.mean_nodes(g,'oc'),dgl.mean_nodes(g,'dc'),g
     
 
 
