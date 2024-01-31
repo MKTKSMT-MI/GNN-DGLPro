@@ -41,6 +41,51 @@ class PatchGCN(nn.Module):
             return dgl.mean_nodes(g,'h'),g
         else:
             return dgl.mean_nodes(g,'h')
+
+
+class MultiPatchGCN(nn.Module):
+    def __init__(self,input_size,hidden_size,object_output_size,direction_output_size,liner=False):
+        super(MultiPatchGCN,self).__init__()
+        self.input_layer=SAGEConv(input_size,hidden_size[0], aggregator_type='mean')
+        self.middle_layers=nn.ModuleList([GraphConv(hidden_size[i],hidden_size[i+1]) for i in range(len(hidden_size)-1)])
+        self.object_output_layer=GraphConv(hidden_size[-1],object_output_size) #物体用
+        self.direction_output_layer=GraphConv(hidden_size[-1],direction_output_size) #方向用
+        if liner==True:
+            self.liner_on = True
+            self.liner_layers=nn.ModuleList([nn.Liner(hidden_size[i],hidden_size[i]) for i in range(len(hidden_size))])
+        else:
+            self.liner_on =False
+        self.m=nn.LeakyReLU()
+
+        self.flatt=nn.Flatten()
+
+    
+    def forward(self,g,n_feat,e_feat=None):
+        #入力層
+        n_feat=self.flatt(n_feat)
+        h=self.input_layer(g,n_feat)
+        h=self.m(h)
+
+        #中間層
+        for i,layer in enumerate(self.middle_layers):
+            if self.liner_on==True:
+                h=self.liner_layers[i](h)
+            h=layer(g,h)
+            h=self.m(h)
+
+        #埋め込み出力
+        g.ndata['emb'] = h
+
+        #出力層-物体
+        o=self.object_output_layer(g,h)
+        g.ndata['o'] = o
+
+        #出力層-方向
+        d=self.direction_output_layer(g,h)
+        g.ndata['d']=d
+
+        
+        return dgl.mean_nodes(g,'o'),dgl.mean_nodes(g,'d'),g
     
 
 
