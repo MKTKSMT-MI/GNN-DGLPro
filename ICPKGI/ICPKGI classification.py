@@ -156,6 +156,8 @@ for model_name, model_config in config.items():
         test_emb_acc = test_emb_correct/len(test_emb_labels)
         #print(f'test embedding acc:{test_emb_acc*100}%')
         test_emb_acc_list.append(test_emb_acc)
+
+        
     print(f'{epochs} acc : {test_emb_acc*100}')
     #各エポックごとの損失・正答率の記録をモデルごとに.npy形式で保存
     np.save(f'{save_dir}/train_loss_list',train_loss_list)

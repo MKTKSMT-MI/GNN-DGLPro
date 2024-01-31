@@ -1,0 +1,15 @@
+best test acc: 0.8890180127832655
+config:
+  hidden_size:
+  - 512
+  - 512
+  - 512
+  - 256
+  - 128
+  - 64
+  input_size: 1024
+  num_heads: 3
+  output_size: 5
+date time: 2024-02-01 01:18:18.633719
+epochs: 500
+run time: 3899.6446480751038
