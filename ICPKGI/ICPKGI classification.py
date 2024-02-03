@@ -28,7 +28,7 @@ from models import PatchGCN
 
 
 device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
-object_name = 'bus'  #car bus airplane
+object_name = 'car'  #car bus airplane
 setting_file = "config2.yaml"
 
 #データ読み込み
@@ -40,7 +40,7 @@ traindataset, testdataset, trainlabels, testlabels=train_test_split(dataset,labe
 
 #データローダー作成
 traindataloader=GraphDataLoader(traindataset,batch_size=1024,shuffle=True,num_workers = 0,pin_memory = True)
-testdataloader=GraphDataLoader(testdataset,batch_size=10,shuffle=True,num_workers = 0,pin_memory = True)
+testdataloader=GraphDataLoader(testdataset,batch_size=512,shuffle=True,num_workers = 0,pin_memory = True)
 
 #全学習を通して変わらない事前情報
 #トレーニングデータのそれぞれのクラス数
@@ -58,7 +58,7 @@ model.to(device)'''
 
 #パラメータ設定
 lr = 0.0001
-epochs = 500
+epochs = 1000
 get_embedding=True
 cos=nn.CosineSimilarity(-1)
 
@@ -75,7 +75,7 @@ for model_name, model_config in config.items():
 
     #モデルの初期化
     #model=PatchGCN(model_config['input_size'],model_config['hidden_size'],model_config['output_size'])
-    model=PatchGCN(1024,[512,256,256,128],5,embedding=get_embedding)
+    model=PatchGCN(model_config['input_size'], model_config['hidden_size'], model_config['output_size'], model_config['num_heads'],embedding=get_embedding)
     model.to(device)
     lossF=nn.CrossEntropyLoss()
     optimizer=optim.AdamW(model.parameters(),lr=lr)
@@ -91,6 +91,7 @@ for model_name, model_config in config.items():
     test_num_correct = 0
     test_num_tests = 0
     best_acc=0
+    emb_best_acc=0
     test_acc_list = []
     test_emb_acc_list=[]
     print('epochスタート')
@@ -120,7 +121,7 @@ for model_name, model_config in config.items():
         num_correct=num_tests=loss_correct=0
 
         #類似度分類
-        direction_graphs=torch.zeros(5,64,128) #中間層の出力のクラス特徴を保存するリスト
+        direction_graphs=torch.zeros(5,64,model_config['hidden_size'][-1]) #中間層の出力のクラス特徴を保存するリスト
         for emb_graph,emb_label in zip(train_emb_graphs,train_emb_labels):
             #中間層の出力をラベル数で割ってクラスインデックスに加算する
             direction_graphs[emb_label]+=((emb_graph.ndata['emb'])/train_label_num[emb_label]).to('cpu')
@@ -154,6 +155,9 @@ for model_name, model_config in config.items():
         emb_pred = torch.sum(cos(direction_graphs,stack_test_emb),dim=-1)
         test_emb_correct=(emb_pred.argmax(1)==torch.tensor(test_emb_labels)).sum().item()
         test_emb_acc = test_emb_correct/len(test_emb_labels)
+        if emb_best_acc<test_emb_acc: #学習中の一番正答率が高かった時の正答率を保存する
+            emb_best_acc=test_emb_acc
+
         #print(f'test embedding acc:{test_emb_acc*100}%')
         test_emb_acc_list.append(test_emb_acc)
 
@@ -175,11 +179,14 @@ for model_name, model_config in config.items():
         'epochs':epochs,
         'config':model_config,
         'best test acc':best_acc,
+        'best emb test acc':emb_best_acc,
         'date time':datetime.datetime.now(),
         'run time':time.time() - start}
         
     with open(f'{save_dir}/acc_result.yaml',"w") as f:
-        yaml.dump(log,f)
+        yaml.dump(log,f,sort_keys=False)
     plt.plot(range((epochs)),test_emb_acc_list)
     plt.savefig(f'{save_dir}/emb_acc.jpg',dpi=300)
     plt.close()
+    print('\n')
+    torch.cuda.empty_cache()
