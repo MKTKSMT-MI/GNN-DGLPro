@@ -38,8 +38,8 @@ labels=[i.item() for _,i in dataset]
 traindataset, testdataset, trainlabels, testlabels=train_test_split(dataset,labels,test_size=0.2,shuffle=True,stratify=labels)
 
 #データローダー作成
-traindataloader=GraphDataLoader(traindataset,batch_size=512,shuffle=True,num_workers = 0,pin_memory = True)
-testdataloader=GraphDataLoader(testdataset,batch_size=10,shuffle=True,num_workers = 0,pin_memory = True)
+traindataloader=GraphDataLoader(traindataset,batch_size=1024,shuffle=True,num_workers = 0,pin_memory = True)
+testdataloader=GraphDataLoader(testdataset,batch_size=512,shuffle=True,num_workers = 0,pin_memory = True)
 
 #設定ファイル読み込み
 with open(f'GNN-DGLPro/ICPKGI/configs/{setting_file}','r') as f:
@@ -52,7 +52,7 @@ for g,i in traindataset:
 
 #パラメータ設定
 lr = 0.0001
-epochs = 500
+epochs = 1000
 cos=nn.CosineSimilarity(-1)
 
 
@@ -69,7 +69,7 @@ for model_name, model_config in config.items():
 
     #モデルの初期化
     #model=PatchGCN(model_config['input_size'],model_config['hidden_size'],model_config['output_size'])
-    model=MultiPatchGCN(1024,[1024,512,512,256,256,128,128],object_output_size=5,direction_output_size=3)
+    model=MultiPatchGCN(model_config['input_size'], model_config['hidden_size'], object_output_size=5,direction_output_size=3)
     model.to(device)
     objlossF=nn.CrossEntropyLoss()
     dirlossF=nn.CrossEntropyLoss()
@@ -88,6 +88,7 @@ for model_name, model_config in config.items():
     test_num_correct = 0
     test_num_tests = 0
     best_acc=0
+    emb_best_acc=0
     test_acc_list = []
     test_emb_acc_list=[]
     
@@ -161,6 +162,8 @@ for model_name, model_config in config.items():
         #正答率計算
         test_emb_correct=(last_emb_pred==torch.tensor(test_emb_labels)).sum().item()
         test_emb_acc=test_emb_correct/len(test_emb_labels)
+        if emb_best_acc<test_emb_acc: #学習中の一番正答率が高かった時の正答率を保存する
+            emb_best_acc=test_emb_acc
         test_emb_acc_list.append(test_emb_acc)
 
 
@@ -181,11 +184,12 @@ for model_name, model_config in config.items():
         'epochs':epochs,
         'config':model_config,
         'best test acc':best_acc,
+        'best emb test acc':emb_best_acc,
         'date time':datetime.datetime.now(),
         'run time':time.time() - start}
         
     with open(f'{save_dir}/acc_result.yaml',"w") as f:
-        yaml.dump(log,f)
+        yaml.dump(log,f,sort_keys=False)
     plt.plot(range((epochs)),test_emb_acc_list)
     plt.savefig(f'{save_dir}/emb_acc.jpg',dpi=300)
     plt.close()

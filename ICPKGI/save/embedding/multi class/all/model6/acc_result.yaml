@@ -1,0 +1,16 @@
+epochs: 1000
+config:
+  input_size: 1024
+  hidden_size:
+  - 512
+  - 512
+  - 256
+  - 256
+  - 128
+  - 128
+  output_size: 3
+  num_heads: 3
+best test acc: 0.8570598489250436
+best emb test acc: 0.8558977338756537
+date time: 2024-02-04 09:28:22.771842
+run time: 6555.7371327877045

@@ -1,5 +1,29 @@
-model1:
+model2:
   input_size: 1024
-  hidden_size: [512,512,512,256,128,64]
-  output_size: 5
+  hidden_size: [512,128]
+  output_size: 3
+  num_heads: 3
+
+model3:
+  input_size: 1024
+  hidden_size: [512,256,128]
+  output_size: 3
+  num_heads: 3
+
+model4:
+  input_size: 1024
+  hidden_size: [512,256,256,128]
+  output_size: 3
+  num_heads: 3
+
+model5:
+  input_size: 1024
+  hidden_size: [512,256,128,128]
+  output_size: 3
+  num_heads: 3
+
+model6:
+  input_size: 1024
+  hidden_size: [512,512,256,256,128,128]
+  output_size: 3
   num_heads: 3
