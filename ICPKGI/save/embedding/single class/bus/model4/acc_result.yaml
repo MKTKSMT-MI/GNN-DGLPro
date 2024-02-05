@@ -4,11 +4,11 @@ config:
   hidden_size:
   - 512
   - 256
-  - 256
+  - 128
   - 128
   output_size: 5
   num_heads: 3
-best test acc: 0.7555555555555555
-best emb test acc: 0.7128205128205128
-date time: 2024-02-03 20:01:21.014057
-run time: 1657.1587188243866
+best test acc: 0.7589743589743589
+best emb test acc: 0.7230769230769231
+date time: 2024-02-04 22:12:33.706860
+run time: 1970.636932849884

@@ -22,11 +22,26 @@ import os
 import yaml
 import time
 import datetime
-from modules import ICPKGIDataset,TrainAccPlot,TrainLossPlot,TestAccPlot,TrainTestAccPlot
+from modules import ICPKGIDataset,TrainAccPlot,TrainLossPlot,TestAccPlot,TrainTestAccPlot,TestEmbAccPlot
 from models import PatchGCN,MultiPatchGCN
 
+def ClassAcc(correct,total,dir):
+    data=np.array(correct)/np.array(total)
+    x=[i for i in range(data.shape[0])]
+    y=data
+    label=['airplane','bus','car']
+    fig=plt.figure()
+    ax=fig.add_subplot()
+    ax.bar(x,y,tick_label=label,align='center')
+    ax.set_title('Test accuracy by class')
+    ax.set_xlabel('classes')
+    ax.set_ylabel('accuracy')
+    ax.set_ylim(0,1)
+    fig.savefig(f'{dir}/test_emb_class_acc.jpg',dpi=300)
+    plt.close()
 
-device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+
+device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
 object_name = 'all'  #car bus airplane
 setting_file = "config_all.yaml"
 
@@ -49,6 +64,7 @@ with open(f'GNN-DGLPro/ICPKGI/configs/{setting_file}','r') as f:
 direction_labels=torch.zeros(3,5)
 for g,i in traindataset:
     direction_labels[i][g.ndata['d'][0].item()]+=1
+object_labels=torch.sum(direction_labels,dim=1)
 
 #パラメータ設定
 lr = 0.0001
@@ -164,6 +180,13 @@ for model_name, model_config in config.items():
         test_emb_acc=test_emb_correct/len(test_emb_labels)
         if emb_best_acc<test_emb_acc: #学習中の一番正答率が高かった時の正答率を保存する
             emb_best_acc=test_emb_acc
+        if epoch==(epochs-1):
+                class_correct=[0]*3
+                class_total=[0]*3
+                for i,j in zip(last_emb_pred,test_emb_labels):
+                    class_total[j]+=1
+                    if i.item() == j:
+                        class_correct[j]+=1
         test_emb_acc_list.append(test_emb_acc)
 
 
@@ -172,6 +195,7 @@ for model_name, model_config in config.items():
     np.save(f'{save_dir}/train_loss_list',train_loss_list)
     np.save(f'{save_dir}/train_acc_list',train_acc_list)
     np.save(f'{save_dir}/test_acc_list',test_acc_list)
+    np.save(f'{save_dir}/test_emb_acc_list',test_emb_acc_list)
     torch.save(model,f'{save_dir}/model_weight.pth')
     torch.save(best_weight,f'{save_dir}/best_model_weight.pth')
     #保存したnpyを画像にプロット＆保存
@@ -179,6 +203,8 @@ for model_name, model_config in config.items():
     TrainLossPlot(train_loss_list,save_dir)
     TestAccPlot(test_acc_list,save_dir)
     TrainTestAccPlot(train_acc_list,test_acc_list,save_dir)
+    TestEmbAccPlot(test_emb_acc_list,save_dir)
+    ClassAcc(class_correct,class_total,save_dir)
     #完全学習後のトレーニング・テストデータそれぞれの正答率を.yaml形式で保存
     log={
         'epochs':epochs,
@@ -190,6 +216,4 @@ for model_name, model_config in config.items():
         
     with open(f'{save_dir}/acc_result.yaml',"w") as f:
         yaml.dump(log,f,sort_keys=False)
-    plt.plot(range((epochs)),test_emb_acc_list)
-    plt.savefig(f'{save_dir}/emb_acc.jpg',dpi=300)
-    plt.close()
+    torch.cuda.empty_cache()

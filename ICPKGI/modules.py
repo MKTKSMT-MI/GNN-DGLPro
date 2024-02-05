@@ -100,3 +100,34 @@ def TrainTestAccPlot(traindata,testdata,dir):
     ax.set_ylim(0,1)
     fig.savefig(f'{dir}/train_test_acc.jpg',dpi=300)
     plt.close()
+
+def TestEmbAccPlot(data,dir):
+    data=np.array(data)
+    x=[j for j in range(data.shape[0])]
+    y=data
+
+    fig=plt.figure()
+    ax=fig.add_subplot()
+    ax.plot(x,y)
+    ax.set_title('Test Embedding accuracy')
+    ax.set_xlabel('epochs')
+    ax.set_ylabel('accuracy')
+    ax.set_xlim(0,data.shape[0])
+    ax.set_ylim(0,1)
+    fig.savefig(f'{dir}/test_emb_acc.jpg',dpi=300)
+    plt.close()
+
+def ClassAcc(correct,total,dir):
+    data=np.array(correct)/np.array(total)
+    x=[i for i in range(data.shape[0])]
+    y=data
+
+    fig=plt.figure()
+    ax=fig.add_subplot()
+    ax.bar(x,y,align='center')
+    ax.set_title('Test accuracy by class')
+    ax.set_xlabel('classes')
+    ax.set_ylabel('accuracy')
+    ax.set_ylim(0,1)
+    fig.savefig(f'{dir}/test_emb_class_acc.jpg',dpi=300)
+    plt.close()
