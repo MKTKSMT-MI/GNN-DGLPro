@@ -64,4 +64,4 @@ multi classフォルダは*3種類の物体について物体のクラス予測*
 このフォルダは学部時代に作ったCIFAR-10という画像データセットを普通のCNNで学習を行った際の重みを保存したファイルがあります。多分使うことは今後ないのでゴミです。
 + STL10
 画像データセットのSTL10の元データ(バイナリファイル)が保存されています。ダウンロードにとても時間がかかるので一応置いてあります。
-[このページ](https://github.com/MakotoKishimoto-OECU/CNN-and-GNN)の発展版
+<!-- [このページ](https://github.com/MakotoKishimoto-OECU/CNN-and-GNN)の発展版 -->
