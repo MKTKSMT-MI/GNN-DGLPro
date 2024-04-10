@@ -1,2 +1,0 @@
-画像を用いた擬似知識グラフによる画像分類
-Image classification using pseudo-knowledge graphs with images (ICPKGI)
