@@ -1,3 +1,0 @@
-import dgl
-
-print('Hello')

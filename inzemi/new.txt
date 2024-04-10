@@ -1,1 +1,0 @@
-First, we analysed the data to obtain the most frequently used words and to identify the most positive and negative words across all participants of the survey, i.e., comments were not analysed for each participant separately but across all received answers to the open-ended questions.
